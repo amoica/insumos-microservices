@@ -1,0 +1,366 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum EstadoOrdenFabricacion {
+  PENDIENTE
+  EN_PROCESO
+  FINALIZADA
+  CANCELADA
+}
+
+enum EstadoOrdenCompra {
+  PENDIENTE
+  APROBADA
+  FINALIZADA
+  CANCELADA
+}
+
+enum EstadoCotizacion {
+  PENDIENTE
+  ACEPTADA
+  RECHAZADA
+}
+
+enum TipoRemito {
+  ENTRADA
+  SALIDA
+}
+
+enum TipoMovimiento {
+  ENTRADA
+  SALIDA
+}
+
+model Insumo {
+  id           Int    @id @default(autoincrement())
+  name         String
+  code         String @unique
+  description  String
+  condition    String
+  minimunStock Int
+
+  available               Boolean              @default(true)
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  Stock                   Stock[]
+  Reserva                 Reserva[]
+  ComponenteProducto      ComponenteProducto[]
+  Movimiento              Movimiento[]
+  CotizacionItem          CotizacionItem[]     @relation(name: "InsumoCotizacion")
+  CotizacionItemReemplazo CotizacionItem[]     @relation(name: "InsumoReemplazo")
+
+  @@index([available])
+  ArticuloTicket ArticuloTicket[]
+  ArticuloPresupuesto ArticuloPresupuesto[]
+}
+
+model ProductoFabricado {
+  id          Int                 @id @default(autoincrement())
+  name        String
+  code        String              @unique
+  description String?
+  componentes ComponenteProducto[] // Relación con ComponenteProducto
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  RecetaProducto RecetaProducto[]
+
+  OrdenFabricacion OrdenFabricacion[]
+}
+
+model RecetaProducto {
+  id                  Int                  @id @default(autoincrement())
+  productoFabricado   ProductoFabricado    @relation(fields: [productoFabricadoId], references: [id])
+  productoFabricadoId Int
+  version             Int // Número de versión de la receta
+  esActiva            Boolean              @default(true) // Indica si es la receta actual
+  componentes         ComponenteProducto[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  @@unique([productoFabricadoId, version]) // Un producto no puede tener dos recetas con la misma versión
+}
+
+model ComponenteProducto {
+  id                Int                @id @default(autoincrement())
+  productoFabricado ProductoFabricado @relation(fields: [productoFabricadoId], references: [id])
+  productoFabricadoId Int
+  insumoId          Int
+  insumo            Insumo             @relation(fields: [insumoId], references: [id])
+  cantidad          Float
+  unidad            String
+  createdAt         DateTime           @default(now())
+
+  RecetaProducto RecetaProducto[]
+}
+
+model Stock {
+  id             Int      @id @default(autoincrement())
+  insumoId       Int
+  insumo         Insumo   @relation(fields: [insumoId], references: [id])
+  depositoId     Int
+  deposito       Deposito @relation(fields: [depositoId], references: [id])
+  currentStock   Int
+  committedStock Int
+  incomingStock  Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([insumoId, depositoId]) // Clave compuesta única
+  @@index([insumoId, depositoId]) // Índice para búsquedas
+}
+
+
+model Deposito {
+  id         Int          @id @default(autoincrement())
+  name       String
+  ciudad     String       @default("No especifica")
+  direccion  String       @default("No especifica")
+  available  Boolean      @default(true)
+  stocks     Stock[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  Reserva    Reserva[]
+  Movimiento Movimiento[]
+  Remito     Remito[]
+}
+
+model Reserva {
+  id               Int                @id @default(autoincrement())
+  insumoId         Int
+  insumo           Insumo             @relation(fields: [insumoId], references: [id])
+  depositoId       Int
+  deposito         Deposito           @relation(fields: [depositoId], references: [id])
+  cantidad         Int
+  estado           String // Estados específicos para reservas (puede ser ENUM si necesitas)
+  referenciaId     Int?
+  referenciaTipo   String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  OrdenFabricacion OrdenFabricacion[]
+
+  @@index([insumoId, depositoId])
+}
+
+model OrdenFabricacion {
+  id                  Int                    @id @default(autoincrement())
+  numero              String                 @unique
+  productoFabricado   ProductoFabricado      @relation(fields: [productoFabricadoId], references: [id])
+  productoFabricadoId Int
+  cantidad            Int
+  estado              EstadoOrdenFabricacion
+  fechaEmision        DateTime               @default(now())
+  fechaEntrega        DateTime
+  observaciones       String?
+  ordenCompraCliente             Remito[] //otden de compraCliente crear nueva tabla
+  reservas            Reserva[] // Relación con las reservas creadas para esta orden
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+}
+
+model OrdenCompra {
+  id           Int               @id @default(autoincrement())
+  numero       String            @unique
+  proveedorId  Int
+  proveedor    Proveedor         @relation(fields: [proveedorId], references: [id])
+  estado       EstadoOrdenCompra // Usa el ENUM definido
+  fechaEmision DateTime          @default(now())
+  fechaEntrega DateTime?
+  cotizaciones Cotizacion[]
+  remitos      Remito[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+model Proveedor {
+  id           Int           @id @default(autoincrement())
+  nombre       String        // Nombre o razón social del proveedor
+  contacto     String?       // Persona de contacto
+  email        String        // Email principal para contacto
+  telefono     String?       // Teléfono del proveedor (opcional)
+  direccion    String?       // Dirección física del proveedor (opcional)
+  ciudad       String?       // Ciudad del proveedor (opcional)
+  provincia    String?       // Provincia del proveedor (opcional)
+  codigoPostal String?       // Código postal (opcional)
+  cuit         String?       // CUIT o identificación fiscal del proveedor
+  condicionFiscal String?    // Situación fiscal (opcional)
+  tipoProveedor String?      // Tipo de proveedor (ej: SERVICIOS, PRODUCTOS, etc.)
+  observaciones String?      // Notas internas u observaciones (opcional)
+  ordenes      OrdenCompra[] // Relación con las órdenes de compra
+  cotizaciones Cotizacion[]  // Relación con las cotizaciones enviadas
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Cotizacion {
+  id            Int              @id @default(autoincrement())
+  ordenCompraId Int
+  ordenCompra   OrdenCompra      @relation(fields: [ordenCompraId], references: [id])
+  proveedorId   Int
+  proveedor     Proveedor        @relation(fields: [proveedorId], references: [id])
+  precioTotal   Float
+  estado        EstadoCotizacion // Usa el ENUM definido
+  items         CotizacionItem[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+model CotizacionItem {
+  id             Int        @id @default(autoincrement())
+  cotizacionId   Int
+  cotizacion     Cotizacion @relation(fields: [cotizacionId], references: [id])
+  insumoId       Int
+  insumo         Insumo     @relation(fields: [insumoId], references: [id], name: "InsumoCotizacion") // Relación principal
+  cantidad       Int
+  precioUnitario Float
+  reemplazoId    Int?
+  reemplazo      Insumo?    @relation(fields: [reemplazoId], references: [id], name: "InsumoReemplazo") // Relación de reemplazo
+}
+
+model Remito {
+  id             Int          @id @default(autoincrement())
+  numero         String       @unique
+  tipo           TipoRemito // Usa el ENUM definido
+  referenciaId   Int? //indica el ID de la orden asociada.
+  referenciaTipo String? //specifica si la referencia es una "OrdenCompra" o "OrdenFabricacion".
+  depositoId     Int
+  deposito       Deposito     @relation(fields: [depositoId], references: [id])
+  movimientos    Movimiento[]
+  fecha          DateTime     @default(now())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  OrdenFabricacion OrdenFabricacion[]
+
+  OrdenCompra OrdenCompra[]
+}
+
+model Movimiento {
+  id          Int      @id @default(autoincrement())
+  insumoId    Int
+  insumo      Insumo   @relation(fields: [insumoId], references: [id])
+  depositoId  Int
+  deposito    Deposito @relation(fields: [depositoId], references: [id])
+  tipo        String   // "ENTRADA" | "SALIDA"
+  cantidad    Int
+  motivo      String?
+  referenciaId Int?
+  referenciaTipo String?
+  remitoId    Int?
+  remito      Remito?  @relation(fields: [remitoId], references: [id])
+  fecha       DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+
+model Cliente {
+  id              Int       @id @default(autoincrement())
+  nombre          String
+  email           String
+  telefono        String
+  celular         String?
+  direccion       String?
+  ciudad          String?
+  provincia       String?
+  codigoPostal    String?
+  cuit            String?
+  condicionFiscal String?
+  tipoCliente     String?
+  observaciones   String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  // Relación con Ticket (asumiendo que existe un modelo Ticket)
+  Ticket          Ticket[]
+}
+
+model TareaGlobal {
+  id          Int      @id @default(autoincrement())
+  nombre      String   @unique // "Cambio de disco", "Limpieza general", etc.
+  descripcion String?  // Detalle opcional de la tarea
+  costoBase   Float    // Costo base de la tarea
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  TareaPresupuesto TareaPresupuesto[]
+
+  TareaTicket TareaTicket[]
+}
+
+model Ticket {
+  id           Int             @id @default(autoincrement())
+  numero       String          @unique // Número único del ticket
+  descripcion  String?         // Descripción general del ticket
+  clienteId    Int
+  cliente      Cliente         @relation(fields: [clienteId], references: [id])
+  estado       String          // "PENDIENTE", "EN_PROGRESO", "FINALIZADO", "ANULADO"
+  presupuesto  Presupuesto?    // Relación con Presupuesto (sin definir `fields` ni `references`)
+  tareas       TareaTicket[]   // Relación con tareas del ticket
+  articulos    ArticuloTicket[] // Relación con insumos/artículos utilizados
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+
+model Presupuesto {
+  id          Int               @id @default(autoincrement())
+  ticketId    Int?              @unique // Campo único para la relación uno-a-uno
+  ticket      Ticket?           @relation(fields: [ticketId], references: [id]) // Relación completamente definida aquí
+  costoTotal  Float             // Costo total estimado
+  estado      String            // "PENDIENTE", "ACEPTADO", "RECHAZADO"
+  tareas      TareaPresupuesto[] // Tareas propuestas en el presupuesto
+  articulos   ArticuloPresupuesto[] // Artículos propuestos en el presupuesto
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model TareaTicket {
+  id          Int          @id @default(autoincrement())
+  ticketId    Int          // Columna de referencia al Ticket
+  ticket      Ticket       @relation(fields: [ticketId], references: [id]) // Relación definida aquí
+  tareaGlobalId Int
+  tareaGlobal TareaGlobal  @relation(fields: [tareaGlobalId], references: [id])
+  estado      String       // "PENDIENTE", "EN_PROGRESO", "FINALIZADA", "ANULADA"
+  costo       Float        // Costo específico (puede diferir del costo base)
+  observaciones String?    // Detalles específicos de la tarea en este ticket
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model ArticuloTicket {
+  id          Int      @id @default(autoincrement())
+  ticketId    Int
+  ticket      Ticket   @relation(fields: [ticketId], references: [id])
+  insumoId    Int
+  insumo      Insumo   @relation(fields: [insumoId], references: [id])
+  cantidad    Int      // Cantidad utilizada del insumo
+  precioUnitario Float // Precio unitario en el momento de la operación
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TareaPresupuesto {
+  id          Int          @id @default(autoincrement())
+  presupuestoId Int
+  presupuesto Presupuesto  @relation(fields: [presupuestoId], references: [id])
+  tareaGlobalId Int
+  tareaGlobal TareaGlobal  @relation(fields: [tareaGlobalId], references: [id])
+  costo       Float        // Costo estimado de la tarea
+}
+
+model ArticuloPresupuesto {
+  id          Int       @id @default(autoincrement())
+  presupuestoId Int
+  presupuesto Presupuesto @relation(fields: [presupuestoId], references: [id])
+  insumoId    Int
+  insumo      Insumo    @relation(fields: [insumoId], references: [id])
+  cantidad    Int       // Cantidad propuesta
+  precioUnitario Float  // Precio unitario propuesto
+}
