@@ -24,7 +24,8 @@ export class ProveedorController {
   }
 
   @MessagePattern({ cmd: 'update_proveedor' })
-  update(@Payload() updateProveedorDto: UpdateProveedorDto) {
+  update(@Payload() updateProveedorDto: any) {
+    console.log("Actualizando desde el microservice", updateProveedorDto);
     return this.proveedorService.update(updateProveedorDto.id, updateProveedorDto);
   }
 

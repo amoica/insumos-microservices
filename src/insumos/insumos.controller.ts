@@ -11,7 +11,7 @@ export class InsumosController {
 
   //@Post()
   @MessagePattern({cmd: 'create_insumo'})
-  create(@Payload() createInsumoDto: CreateInsumoDto) {
+  create(@Payload() createInsumoDto: any) {
     return this.insumosService.create(createInsumoDto);
   }
 
