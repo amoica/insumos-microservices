@@ -37,7 +37,9 @@ export class DepositosController {
 
   @MessagePattern({cmd: 'updateStockDeposito'})
   updateStock(@Payload() updateStockDto: UpdateStockDto){
-    return this.depositosService.updateStock(updateStockDto);
+    /*return this.depositosService.updateStock(updateStockDto);*/
+
+    return
   }
 
   

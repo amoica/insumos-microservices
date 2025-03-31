@@ -14,16 +14,40 @@ export class ClienteService extends PrismaClient implements OnModuleInit {
     this.logger.log('Database conected');
   }
 
-  create(createClienteDto: CreateClienteDto) {
+  create(dto: CreateClienteDto) {
+
+    const {contactos, ...clienteData} = dto;
 
     return this.cliente.create({
-      data: createClienteDto
-    })
+      data: {
+        ...clienteData,
+        ...(contactos && contactos.length > 0
+          ? {
+              contactos: {
+                create: contactos.map((contactoDto) => ({
+                  ...contactoDto
+                })),
+              },
+            }
+          : {}),
+      },
+      // Opcionalmente incluimos contactos en la respuesta
+      include: {
+        contactos: true,
+      },
+    });
   }
+
 
   findAll() {
     
-    return this.cliente.findMany();
+    return this.cliente.findMany(
+      {
+        include: {
+          contactos: true
+        }
+      }
+    );
   }
 
   findOne(id: number) {
@@ -31,12 +55,18 @@ export class ClienteService extends PrismaClient implements OnModuleInit {
     return this.cliente.findUnique({
       where: {
         id
+      },
+      include: {
+        contactos: true
       }
     })
   }
 
-  update(id: number, updateClienteDto: UpdateClienteDto) {
+  update(id: number, dto: UpdateClienteDto) {
     
+    const {contactos, ...updateClienteDto} = dto;
+    
+
     return this.cliente.update({
       where: {
         id

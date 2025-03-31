@@ -1,0 +1,608 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table Contacto {
+  id Int [pk, increment]
+  nombre String [not null]
+  email String
+  telefono String
+  cargo String
+  observaciones String
+  clienteId Int
+  cliente Cliente
+  proveedorId Int
+  proveedor Proveedor
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Usuario {
+  id Int [pk, increment]
+  email String [unique, not null]
+  password String [not null]
+  nombre String [not null]
+  role Role [not null, default: 'COMPRAS']
+  notificaciones Notificacion [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Notificacion {
+  id Int [pk, increment]
+  usuarioId Int [not null]
+  usuario Usuario [not null]
+  titulo String [not null]
+  mensaje String [not null]
+  leido Boolean [not null, default: false]
+  fecha DateTime [default: `now()`, not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Cliente {
+  id Int [pk, increment]
+  nombre String [not null]
+  email String [not null]
+  telefono String [not null]
+  celular String
+  direccion String
+  ciudad String
+  provincia String
+  codigoPostal String
+  cuit String
+  condicionFiscal String
+  tipoCliente String
+  observaciones String
+  ordenesFabricacion OrdenFabricacion [not null]
+  ordenesTrabajoCampo OrdenTrabajoCampo [not null]
+  tickets Ticket [not null]
+  contactos Contacto [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Proveedor {
+  id Int [pk, increment]
+  nombre String [not null]
+  email String [not null]
+  telefono String
+  direccion String
+  ciudad String
+  provincia String
+  codigoPostal String
+  cuit String
+  condicionFiscal String
+  tipoProveedor String
+  observaciones String
+  ordenes OrdenCompra [not null]
+  insumos InsumoProveedor [not null]
+  cotizaciones Cotizacion [not null]
+  contactos Contacto [not null]
+  preciosInsumos PrecioProveedorInsumo [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Insumo {
+  id Int [pk, increment]
+  name String [not null]
+  code String [unique, not null]
+  description String
+  minimunStock Int
+  isInventoriable Boolean [not null, default: true]
+  sinonimo String
+  available Boolean [not null, default: true]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  inventario Inventario [not null]
+  reservas Reserva [not null]
+  componenteProductos ComponenteProducto [not null]
+  movimientos Movimiento [not null]
+  cotizacionItems CotizacionItem [not null]
+  cotizacionItemsReemplazo CotizacionItem [not null]
+  articulosTicket ArticuloTicket [not null]
+  articulosPresupuesto ArticuloPresupuesto [not null]
+  preciosProveedores PrecioProveedorInsumo [not null]
+  insumoProveedor InsumoProveedor [not null]
+  SolicitudItem SolicitudItem [not null]
+}
+
+Table InsumoProveedor {
+  id Int [pk, increment]
+  insumoId Int [not null]
+  insumo Insumo [not null]
+  proveedorId Int [not null]
+  proveedor Proveedor [not null]
+  codigoProveedor String [not null]
+  precioUnitario Float
+  fechaActualizacion DateTime [default: `now()`, not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (insumoId, proveedorId) [unique]
+  }
+}
+
+Table PrecioProveedorInsumo {
+  id Int [pk, increment]
+  insumoId Int [not null]
+  insumo Insumo [not null]
+  proveedorId Int [not null]
+  proveedor Proveedor [not null]
+  precioUnitario Float [not null]
+  moneda String
+  fechaVigencia DateTime [default: `now()`, not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (insumoId, proveedorId) [unique]
+  }
+}
+
+Table Inventario {
+  id Int [pk, increment]
+  insumoId Int [not null]
+  insumo Insumo [not null]
+  depositoId Int [not null]
+  deposito Deposito [not null]
+  stockActual Int [not null]
+  stockComprometido Int [not null]
+  stockEnTransito Int [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (insumoId, depositoId) [unique]
+  }
+}
+
+Table Deposito {
+  id Int [pk, increment]
+  nombre String [not null]
+  ciudad String [default: 'No especifica']
+  direccion String [default: 'No especifica']
+  available Boolean [not null, default: true]
+  inventario Inventario [not null]
+  reservas Reserva [not null]
+  movimientos Movimiento [not null]
+  remitos Remito [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Reserva {
+  id Int [pk, increment]
+  insumoId Int [not null]
+  insumo Insumo [not null]
+  depositoId Int [not null]
+  deposito Deposito [not null]
+  cantidad Int [not null]
+  estado String [not null]
+  ordenFabricacionId Int
+  ordenFabricacion OrdenFabricacion
+  ordenTrabajoCampoId Int
+  ordenTrabajoCampo OrdenTrabajoCampo
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Movimiento {
+  id Int [pk, increment]
+  insumoId Int [not null]
+  insumo Insumo [not null]
+  depositoId Int [not null]
+  deposito Deposito [not null]
+  tipo TipoMovimiento [not null]
+  cantidad Int [not null]
+  motivo String
+  remitoId Int
+  remito Remito
+  ordenFabricacionId Int
+  ordenFabricacion OrdenFabricacion
+  ordenTrabajoCampoId Int
+  ordenTrabajoCampo OrdenTrabajoCampo
+  fecha DateTime [default: `now()`, not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table OrdenFabricacion {
+  id Int [pk, increment]
+  numero String [unique, not null]
+  productoFabricadoId Int [not null]
+  productoFabricado ProductoFabricado [not null]
+  cantidad Int [not null]
+  estado EstadoOrdenFabricacion [not null]
+  fechaEmision DateTime [default: `now()`, not null]
+  fechaEntrega DateTime
+  observaciones String
+  clienteId Int
+  cliente Cliente
+  ordenCompraCliente String
+  prioridad Prioridad [default: 'MEDIA']
+  reservas Reserva [not null]
+  movimientos Movimiento [not null]
+  remitos Remito [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  SolicitudMaterial SolicitudMaterial [not null]
+}
+
+Table ProductoFabricado {
+  id Int [pk, increment]
+  nombre String [not null]
+  codigo String [unique, not null]
+  descripcion String
+  recetas RecetaProducto [not null]
+  ordenesFabricacion OrdenFabricacion [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  ComponenteProducto ComponenteProducto [not null]
+}
+
+Table RecetaProducto {
+  id Int [pk, increment]
+  productoFabricadoId Int [not null]
+  productoFabricado ProductoFabricado [not null]
+  version Int [not null]
+  esActiva Boolean [not null, default: true]
+  componentes ComponenteProducto [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (productoFabricadoId, version) [unique]
+  }
+}
+
+Table ComponenteProducto {
+  id Int [pk, increment]
+  recetaProductoId Int
+  recetaProducto RecetaProducto
+  productoFabricadoId Int
+  productoFabricado ProductoFabricado
+  insumoId Int [not null]
+  insumo Insumo [not null]
+  cantidad Float [not null]
+  unidad String [not null]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table OrdenTrabajoCampo {
+  id Int [pk, increment]
+  numero String [unique, not null]
+  descripcion String
+  estado EstadoOrdenCampo [not null, default: 'PENDIENTE']
+  fechaEmision DateTime [default: `now()`, not null]
+  fechaRetorno DateTime
+  prioridad Prioridad [default: 'MEDIA']
+  clienteId Int
+  cliente Cliente
+  reservas Reserva [not null]
+  remitos Remito [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  SolicitudMaterial SolicitudMaterial [not null]
+  Movimiento Movimiento [not null]
+}
+
+Table SolicitudMaterial {
+  id Int [pk, increment]
+  numero String [unique, not null]
+  estado EstadoSolicitud [not null, default: 'PENDIENTE']
+  fechaEmision DateTime [default: `now()`, not null]
+  motivo String
+  ordenFabricacionId Int
+  ordenFabricacion OrdenFabricacion
+  ordenTrabajoCampoId Int
+  ordenTrabajoCampo OrdenTrabajoCampo
+  items SolicitudItem [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table SolicitudItem {
+  id Int [pk, increment]
+  solicitudId Int [not null]
+  solicitud SolicitudMaterial [not null]
+  insumoId Int [not null]
+  insumo Insumo [not null]
+  cantidad Float [not null]
+  observaciones String
+}
+
+Table OrdenCompra {
+  id Int [pk, increment]
+  numero String [unique, not null]
+  proveedorId Int [not null]
+  proveedor Proveedor [not null]
+  estado EstadoOrdenCompra [not null]
+  fechaEmision DateTime [default: `now()`, not null]
+  fechaEntrega DateTime
+  cotizaciones Cotizacion [not null]
+  remitos Remito [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Cotizacion {
+  id Int [pk, increment]
+  ordenCompraId Int [not null]
+  ordenCompra OrdenCompra [not null]
+  proveedorId Int [not null]
+  proveedor Proveedor [not null]
+  precioTotal Float [not null]
+  estado EstadoCotizacion [not null]
+  items CotizacionItem [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table CotizacionItem {
+  id Int [pk, increment]
+  cotizacionId Int [not null]
+  cotizacion Cotizacion [not null]
+  insumoId Int [not null]
+  insumo Insumo [not null]
+  cantidad Int [not null]
+  precioUnitario Float [not null]
+  reemplazoId Int
+  reemplazo Insumo
+}
+
+Table Remito {
+  id Int [pk, increment]
+  numero String [unique, not null]
+  tipo TipoRemito [not null]
+  depositoId Int [not null]
+  deposito Deposito [not null]
+  movimientos Movimiento [not null]
+  ordenCompraId Int
+  ordenCompra OrdenCompra
+  ordenFabricacionId Int
+  ordenFabricacion OrdenFabricacion
+  ordenTrabajoCampoId Int
+  ordenTrabajoCampo OrdenTrabajoCampo
+  fecha DateTime [default: `now()`, not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table TareaGlobal {
+  id Int [pk, increment]
+  nombre String [unique, not null]
+  descripcion String
+  costoBase Float [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  tareasTicket TareaTicket [not null]
+  tareasPresupuesto TareaPresupuesto [not null]
+}
+
+Table Ticket {
+  id Int [pk, increment]
+  numero String [unique, not null]
+  descripcion String
+  clienteId Int [not null]
+  cliente Cliente [not null]
+  estado String [not null]
+  presupuesto Presupuesto
+  tareas TareaTicket [not null]
+  articulos ArticuloTicket [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table TareaTicket {
+  id Int [pk, increment]
+  ticketId Int [not null]
+  ticket Ticket [not null]
+  tareaGlobalId Int [not null]
+  tareaGlobal TareaGlobal [not null]
+  estado String [not null]
+  costo Float [not null]
+  observaciones String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table ArticuloTicket {
+  id Int [pk, increment]
+  ticketId Int [not null]
+  ticket Ticket [not null]
+  insumoId Int [not null]
+  insumo Insumo [not null]
+  cantidad Int [not null]
+  precioUnitario Float [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Presupuesto {
+  id Int [pk, increment]
+  ticketId Int [unique]
+  ticket Ticket
+  costoTotal Float [not null]
+  estado String [not null]
+  tareas TareaPresupuesto [not null]
+  articulos ArticuloPresupuesto [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table TareaPresupuesto {
+  id Int [pk, increment]
+  presupuestoId Int [not null]
+  presupuesto Presupuesto [not null]
+  tareaGlobalId Int [not null]
+  tareaGlobal TareaGlobal [not null]
+  costo Float [not null]
+}
+
+Table ArticuloPresupuesto {
+  id Int [pk, increment]
+  presupuestoId Int [not null]
+  presupuesto Presupuesto [not null]
+  insumoId Int [not null]
+  insumo Insumo [not null]
+  cantidad Int [not null]
+  precioUnitario Float [not null]
+}
+
+Enum EstadoOrdenFabricacion {
+  PENDIENTE
+  EN_PROCESO
+  FINALIZADA
+  CANCELADA
+}
+
+Enum EstadoOrdenCompra {
+  PENDIENTE
+  APROBADA
+  FINALIZADA
+  CANCELADA
+}
+
+Enum EstadoCotizacion {
+  PENDIENTE
+  ACEPTADA
+  RECHAZADA
+}
+
+Enum TipoRemito {
+  ENTRADA
+  SALIDA
+}
+
+Enum TipoMovimiento {
+  ENTRADA
+  SALIDA
+}
+
+Enum Role {
+  ADMIN
+  FABRICACION
+  ALMACEN
+  COMPRAS
+}
+
+Enum EstadoSolicitud {
+  PENDIENTE
+  APROBADA
+  CANCELADA
+  PROCESADA
+}
+
+Enum EstadoOrdenCampo {
+  PENDIENTE
+  EN_PROGRESO
+  FINALIZADA
+  CANCELADA
+}
+
+Enum Prioridad {
+  BAJA
+  MEDIA
+  ALTA
+}
+
+Ref: Contacto.clienteId > Cliente.id
+
+Ref: Contacto.proveedorId > Proveedor.id
+
+Ref: Notificacion.usuarioId > Usuario.id
+
+Ref: InsumoProveedor.insumoId > Insumo.id
+
+Ref: InsumoProveedor.proveedorId > Proveedor.id
+
+Ref: PrecioProveedorInsumo.insumoId > Insumo.id
+
+Ref: PrecioProveedorInsumo.proveedorId > Proveedor.id
+
+Ref: Inventario.insumoId > Insumo.id
+
+Ref: Inventario.depositoId > Deposito.id
+
+Ref: Reserva.insumoId > Insumo.id
+
+Ref: Reserva.depositoId > Deposito.id
+
+Ref: Reserva.ordenFabricacionId > OrdenFabricacion.id
+
+Ref: Reserva.ordenTrabajoCampoId > OrdenTrabajoCampo.id
+
+Ref: Movimiento.insumoId > Insumo.id
+
+Ref: Movimiento.depositoId > Deposito.id
+
+Ref: Movimiento.remitoId > Remito.id
+
+Ref: Movimiento.ordenFabricacionId > OrdenFabricacion.id
+
+Ref: Movimiento.ordenTrabajoCampoId > OrdenTrabajoCampo.id
+
+Ref: OrdenFabricacion.productoFabricadoId > ProductoFabricado.id
+
+Ref: OrdenFabricacion.clienteId > Cliente.id
+
+Ref: RecetaProducto.productoFabricadoId > ProductoFabricado.id
+
+Ref: ComponenteProducto.recetaProductoId > RecetaProducto.id
+
+Ref: ComponenteProducto.productoFabricadoId > ProductoFabricado.id
+
+Ref: ComponenteProducto.insumoId > Insumo.id
+
+Ref: OrdenTrabajoCampo.clienteId > Cliente.id
+
+Ref: SolicitudMaterial.ordenFabricacionId > OrdenFabricacion.id
+
+Ref: SolicitudMaterial.ordenTrabajoCampoId > OrdenTrabajoCampo.id
+
+Ref: SolicitudItem.solicitudId > SolicitudMaterial.id
+
+Ref: SolicitudItem.insumoId > Insumo.id
+
+Ref: OrdenCompra.proveedorId > Proveedor.id
+
+Ref: Cotizacion.ordenCompraId > OrdenCompra.id
+
+Ref: Cotizacion.proveedorId > Proveedor.id
+
+Ref: CotizacionItem.cotizacionId > Cotizacion.id
+
+Ref: CotizacionItem.insumoId > Insumo.id
+
+Ref: CotizacionItem.reemplazoId > Insumo.id
+
+Ref: Remito.depositoId > Deposito.id
+
+Ref: Remito.ordenCompraId > OrdenCompra.id
+
+Ref: Remito.ordenFabricacionId > OrdenFabricacion.id
+
+Ref: Remito.ordenTrabajoCampoId > OrdenTrabajoCampo.id
+
+Ref: Ticket.clienteId > Cliente.id
+
+Ref: TareaTicket.ticketId > Ticket.id
+
+Ref: TareaTicket.tareaGlobalId > TareaGlobal.id
+
+Ref: ArticuloTicket.ticketId > Ticket.id
+
+Ref: ArticuloTicket.insumoId > Insumo.id
+
+Ref: Presupuesto.ticketId - Ticket.id
+
+Ref: TareaPresupuesto.presupuestoId > Presupuesto.id
+
+Ref: TareaPresupuesto.tareaGlobalId > TareaGlobal.id
+
+Ref: ArticuloPresupuesto.presupuestoId > Presupuesto.id
+
+Ref: ArticuloPresupuesto.insumoId > Insumo.id

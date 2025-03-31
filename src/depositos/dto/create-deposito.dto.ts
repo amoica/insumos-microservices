@@ -1,9 +1,9 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsBoolean } from 'class-validator';
 
 export class CreateDepositoDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  nombre: string;
 
   @IsString()
   @IsOptional()
@@ -12,4 +12,8 @@ export class CreateDepositoDto {
   @IsString()
   @IsOptional()
   direccion: string;
+
+  @IsBoolean()
+  @IsOptional()
+  avaliable: boolean;
 }

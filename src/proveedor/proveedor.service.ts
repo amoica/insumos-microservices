@@ -12,33 +12,62 @@ export class ProveedorService extends PrismaClient implements OnModuleInit {
     this.logger.log('Database connected');
   }
 
-  create(createProveedorDto: CreateProveedorDto) {
+  create(dto: CreateProveedorDto) {
+
+    const { contactos, ...createProveedorDto } = dto;
+
     return this.proveedor.create({
-      data: createProveedorDto,
+      data:{
+        ...createProveedorDto,
+        ...(contactos && contactos.length > 0
+          ? {
+              contactos: {
+                create: contactos.map((contactoDto) => ({
+                  ...contactoDto
+                })),
+              },
+            }
+          : {}),
+      },
+      // Opcionalmente incluimos contactos en la respuesta
+      include: {
+        contactos: true,
+      },
     });
   }
 
   findAll() {
-    return this.proveedor.findMany();
+    return this.proveedor.findMany({
+      include: {
+        contactos: true,
+      },
+    });
   }
 
   findOne(id: number) {
     return this.proveedor.findUnique({
       where: {
-        id,
+        id
+      },
+      include: {
+        contactos: true,
       },
     });
   }
 
-  update(id: number, updateProveedorDto: UpdateProveedorDto) {
+  update(id: number, dto: UpdateProveedorDto) {
+    const { contactos, ...updateProveedorDto } = dto;
     return this.proveedor.update({
       where: {
         id,
       },
-      data: updateProveedorDto,
+      data: {
+        ...updateProveedorDto,
+      },
     });
   }
 
+  //Recordar no eliminar si no dar de baja!
   remove(id: number) {
     return this.proveedor.delete({
       where: {

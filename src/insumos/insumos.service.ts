@@ -4,6 +4,7 @@ import { UpdateInsumoDto } from './dto/update-insumo.dto';
 import { PrismaClient } from '@prisma/client';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { RpcException } from '@nestjs/microservices';
+import { connect } from 'http2';
 
 @Injectable()
 export class InsumosService extends PrismaClient implements OnModuleInit {
@@ -18,8 +19,27 @@ export class InsumosService extends PrismaClient implements OnModuleInit {
   }
   create(createInsumoDto: CreateInsumoDto) {
 
+    // Separamos los datos del insumo y, si existen, la relación con proveedores
+
+    const {proveedores, ...inusumoData} = createInsumoDto;
+
+
     return this.insumo.create({
-      data: createInsumoDto
+      data: {
+        ...inusumoData,
+        ...(proveedores && {
+          insumoProveedor: {
+            create: proveedores.map((prov)=>({
+              proveedor: {connect: {id: prov.proveedorId}},
+              codigoProveedor: prov.codigoProveedor,
+
+              //El precio puede quedar nulo
+              precioUnitario: prov.precioUnitario
+            }))
+          }
+        }
+        )
+      }
     })
   }
 
@@ -36,7 +56,10 @@ export class InsumosService extends PrismaClient implements OnModuleInit {
       skip:(page-1) * limit,
       take:limit,
       where:{
-        available:true
+        available:true,
+      },
+      include:{
+        insumoProveedor:true
       }
     }),
     meta:{
@@ -54,6 +77,13 @@ export class InsumosService extends PrismaClient implements OnModuleInit {
       where: {
         id,
         available:true
+      },
+      include:{
+        insumoProveedor:{
+          include:{
+            proveedor:true
+          }
+        }
       }
     })
 

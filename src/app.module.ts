@@ -1,16 +1,13 @@
 import { Module } from '@nestjs/common';
 import { InsumosModule } from './insumos/insumos.module';
 import { DepositosModule } from './depositos/depositos.module';
-import { OrdenFabricacionModule } from './orden-fabricacion/orden-fabricacion.module';
-import { ProductoFabricadoModule } from './producto-fabricado/producto-fabricado.module';
-import { ReservasModule } from './reservas/reservas.module';
-import { MovimientoModule } from './movimiento/movimiento.module';
 import { ClienteModule } from './cliente/cliente.module';
 import { ProveedorModule } from './proveedor/proveedor.module';
+import { ContactoModule } from './contacto/contacto.module';
 
 
 @Module({
-  imports: [InsumosModule, DepositosModule, OrdenFabricacionModule, ProductoFabricadoModule, ReservasModule, MovimientoModule, ClienteModule, ProveedorModule],
+  imports: [InsumosModule, DepositosModule, ClienteModule, ProveedorModule, ContactoModule],
   controllers: [],
   providers: [],
 })
