@@ -158,6 +158,8 @@ model Cliente {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  PedidoCliente PedidoCliente[]
 }
 
 model Proveedor {
@@ -201,9 +203,11 @@ model Insumo {
   name            String
   code            String   @unique
   description     String?
+  unidad          String  @default("SIN UNIDAD MEDIDA")
+  imagenUrl        String
   minimunStock    Int? // Stock mínimo para disparar solicitud
   isInventoriable Boolean  @default(true)
-  sinonimo        String?  // Sinónimo o nombre alternativo
+  sinonimo        String? // Sinónimo o nombre alternativo
   available       Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -233,7 +237,8 @@ model Insumo {
 
   insumoProveedor InsumoProveedor[]
 
-  SolicitudItem SolicitudItem[]
+  SolicitudItem   SolicitudItem[]
+  SkidSectionItem SkidSectionItem[]
 }
 
 model InsumoProveedor {
@@ -376,51 +381,94 @@ model OrdenFabricacion {
   fechaEntrega        DateTime?
   observaciones       String?
 
-  // Relación opcional con un cliente
-  clienteId          Int?
-  cliente            Cliente? @relation(fields: [clienteId], references: [id])
-  ordenCompraCliente String? // Número de OC del cliente si aplica
+  clienteId           Int?
+  cliente             Cliente?               @relation(fields: [clienteId], references: [id])
+  
+  // Campo opcional para almacenar la referencia a la orden de compra del cliente
+  pedidoClienteId     Int?                  
+  pedidoCliente       PedidoCliente?         @relation(fields: [pedidoClienteId], references: [id])
 
-  prioridad Prioridad? @default(MEDIA)
+  prioridad           Prioridad?             @default(MEDIA)
+  snapshotSkid        Json?                  // Configuración congelada del skid
 
-  // Reservas y movimientos asociados
-  reservas    Reserva[]
-  movimientos Movimiento[]
-  remitos     Remito[]
+  reservas            Reserva[]
+  movimientos         Movimiento[]
+  remitos             Remito[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
 
-  SolicitudMaterial SolicitudMaterial[]
+  SolicitudMaterial   SolicitudMaterial[]
+}
+
+model PedidoCliente {
+  id            Int      @id @default(autoincrement())
+  numero        String   @unique
+  fecha         DateTime @default(now())
+  clienteId     Int
+  // Otras propiedades relevantes: monto total, documentos, etc.
+  // Relación con el cliente:
+  cliente       Cliente  @relation(fields: [clienteId], references: [id])
+
+  // Puedes agregar un campo para almacenar el documento (URL o path)
+  documento     String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  OrdenFabricacion OrdenFabricacion[]
 }
 
 model ProductoFabricado {
-  id          Int     @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   nombre      String
-  codigo      String  @unique
+  codigo      String        @unique
   descripcion String?
-
-  recetas            RecetaProducto[]
-  ordenesFabricacion OrdenFabricacion[]
+  imagen String?
+  secciones   SkidSection[] // <== Agregamos la relación a secciones
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  RecetaProducto RecetaProducto[] @relation("ProductoRecetas")
+
+  OrdenFabricacion OrdenFabricacion[]
 
   ComponenteProducto ComponenteProducto[]
 }
 
-model RecetaProducto {
+model SkidSection {
   id                  Int               @id @default(autoincrement())
-  productoFabricadoId Int
+  nombre              String?
+  baseComponenteId    Int?
   productoFabricado   ProductoFabricado @relation(fields: [productoFabricadoId], references: [id])
-  version             Int
-  esActiva            Boolean           @default(true)
+  productoFabricadoId Int
+  items               SkidSectionItem[]
+}
 
+model SkidSectionItem {
+  id       Int         @id @default(autoincrement())
+  insumoId Int
+  cantidad Float
+  section  SkidSection @relation(fields: [sectionId], references: [id])
+  insumo   Insumo      @relation(fields: [insumoId], references: [id])
+
+  sectionId Int
+}
+
+model RecetaProducto {
+  id          Int                  @id @default(autoincrement())
+  version     Int
+  esActiva    Boolean              @default(true)
+  codigo      String               @unique
+  nombre      String
+  tipo        String?
   componentes ComponenteProducto[]
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
 
-  @@unique([productoFabricadoId, version])
+  productos ProductoFabricado[] @relation("ProductoRecetas")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model ComponenteProducto {
@@ -437,7 +485,6 @@ model ComponenteProducto {
   insumoId  Int
   insumo    Insumo   @relation(fields: [insumoId], references: [id])
   cantidad  Float
-  unidad    String
   createdAt DateTime @default(now())
 }
 

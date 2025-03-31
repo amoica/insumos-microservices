@@ -31,6 +31,12 @@ export class CreateInsumoDto {
     @IsString()
     public sinonimo: string
 
+    @IsString()
+    public imagenUrl: string
+
+    @IsString()
+    public unidad:string
+
     // Propiedad que relaciona proveedor y su código
 
     @IsOptional()

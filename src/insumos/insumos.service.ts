@@ -99,16 +99,30 @@ export class InsumosService extends PrismaClient implements OnModuleInit {
   }
 
   async update(id: number, updateInsumoDto: UpdateInsumoDto) {
-
-    const {id: __, ...data} = updateInsumoDto;
-
+    // Separamos la lista de proveedores de los demás datos
+    const { proveedores, id: __, ...data } = updateInsumoDto;
+  
+    // Nos aseguramos de que el insumo existe
     await this.findOne(id);
-
+  
+    // Actualizamos el insumo y reemplazamos la relación de proveedores
     const updateInsumo = await this.insumo.update({
-      where:{id},
-      data:data
-    })
-
+      where: { id },
+      data: {
+        ...data,
+        insumoProveedor: {
+          // Eliminamos las relaciones actuales
+          deleteMany: {},
+          // Creamos las nuevas relaciones
+          create: proveedores ? proveedores.map((prov) => ({
+            proveedor: { connect: { id: prov.proveedorId } },
+            codigoProveedor: prov.codigoProveedor,
+            precioUnitario: prov.precioUnitario,
+          })) : [],
+        },
+      },
+    });
+  
     return updateInsumo;
   }
 

@@ -10,6 +10,7 @@ export class InsumosController {
   constructor(private readonly insumosService: InsumosService) {}
 
   //@Post()
+
   @MessagePattern({cmd: 'create_insumo'})
   create(@Payload() createInsumoDto: any) {
     return this.insumosService.create(createInsumoDto);

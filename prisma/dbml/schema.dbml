@@ -60,6 +60,7 @@ Table Cliente {
   contactos Contacto [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
+  PedidoCliente PedidoCliente [not null]
 }
 
 Table Proveedor {
@@ -89,6 +90,8 @@ Table Insumo {
   name String [not null]
   code String [unique, not null]
   description String
+  unidad String [not null, default: 'SIN UNIDAD MEDIDA']
+  imagenUrl String [not null]
   minimunStock Int
   isInventoriable Boolean [not null, default: true]
   sinonimo String
@@ -106,6 +109,7 @@ Table Insumo {
   preciosProveedores PrecioProveedorInsumo [not null]
   insumoProveedor InsumoProveedor [not null]
   SolicitudItem SolicitudItem [not null]
+  SkidSectionItem SkidSectionItem [not null]
 }
 
 Table InsumoProveedor {
@@ -221,8 +225,10 @@ Table OrdenFabricacion {
   observaciones String
   clienteId Int
   cliente Cliente
-  ordenCompraCliente String
+  pedidoClienteId Int
+  pedidoCliente PedidoCliente
   prioridad Prioridad [default: 'MEDIA']
+  snapshotSkid Json
   reservas Reserva [not null]
   movimientos Movimiento [not null]
   remitos Remito [not null]
@@ -231,31 +237,61 @@ Table OrdenFabricacion {
   SolicitudMaterial SolicitudMaterial [not null]
 }
 
+Table PedidoCliente {
+  id Int [pk, increment]
+  numero String [unique, not null]
+  fecha DateTime [default: `now()`, not null]
+  clienteId Int [not null]
+  cliente Cliente [not null]
+  documento String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  OrdenFabricacion OrdenFabricacion [not null]
+}
+
 Table ProductoFabricado {
   id Int [pk, increment]
   nombre String [not null]
   codigo String [unique, not null]
   descripcion String
-  recetas RecetaProducto [not null]
-  ordenesFabricacion OrdenFabricacion [not null]
+  imagen String
+  secciones SkidSection [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
+  RecetaProducto RecetaProducto [not null]
+  OrdenFabricacion OrdenFabricacion [not null]
   ComponenteProducto ComponenteProducto [not null]
+}
+
+Table SkidSection {
+  id Int [pk, increment]
+  nombre String
+  baseComponenteId Int
+  productoFabricado ProductoFabricado [not null]
+  productoFabricadoId Int [not null]
+  items SkidSectionItem [not null]
+}
+
+Table SkidSectionItem {
+  id Int [pk, increment]
+  insumoId Int [not null]
+  cantidad Float [not null]
+  section SkidSection [not null]
+  insumo Insumo [not null]
+  sectionId Int [not null]
 }
 
 Table RecetaProducto {
   id Int [pk, increment]
-  productoFabricadoId Int [not null]
-  productoFabricado ProductoFabricado [not null]
   version Int [not null]
   esActiva Boolean [not null, default: true]
+  codigo String [unique, not null]
+  nombre String [not null]
+  tipo String
   componentes ComponenteProducto [not null]
+  productos ProductoFabricado [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
-
-  indexes {
-    (productoFabricadoId, version) [unique]
-  }
 }
 
 Table ComponenteProducto {
@@ -267,7 +303,6 @@ Table ComponenteProducto {
   insumoId Int [not null]
   insumo Insumo [not null]
   cantidad Float [not null]
-  unidad String [not null]
   createdAt DateTime [default: `now()`, not null]
 }
 
@@ -452,6 +487,11 @@ Table ArticuloPresupuesto {
   precioUnitario Float [not null]
 }
 
+Table ProductoRecetas {
+  recetaproductoId Int [ref: > RecetaProducto.id]
+  productosId Int [ref: > ProductoFabricado.id]
+}
+
 Enum EstadoOrdenFabricacion {
   PENDIENTE
   EN_PROCESO
@@ -549,7 +589,15 @@ Ref: OrdenFabricacion.productoFabricadoId > ProductoFabricado.id
 
 Ref: OrdenFabricacion.clienteId > Cliente.id
 
-Ref: RecetaProducto.productoFabricadoId > ProductoFabricado.id
+Ref: OrdenFabricacion.pedidoClienteId > PedidoCliente.id
+
+Ref: PedidoCliente.clienteId > Cliente.id
+
+Ref: SkidSection.productoFabricadoId > ProductoFabricado.id
+
+Ref: SkidSectionItem.sectionId > SkidSection.id
+
+Ref: SkidSectionItem.insumoId > Insumo.id
 
 Ref: ComponenteProducto.recetaProductoId > RecetaProducto.id
 
