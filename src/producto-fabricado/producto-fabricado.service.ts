@@ -19,11 +19,14 @@ export class ProductoFabricadoService extends PrismaClient implements OnModuleIn
 
   async create(createProductoFabricadoDto: CreateProductoFabricadoDto) {
     try {
-      const { nombre, codigo, secciones } = createProductoFabricadoDto;
+      const { nombre, codigo, secciones, imagen, lts, tipo } = createProductoFabricadoDto;
       return await this.productoFabricado.create({
         data: {
           nombre,
           codigo,
+          imagen,
+          lts,
+          tipo,
           secciones: {
             create: secciones.map((seccion) => ({
               nombre: seccion.nombre,
@@ -53,6 +56,9 @@ export class ProductoFabricadoService extends PrismaClient implements OnModuleIn
           id: true,
           nombre: true,
           codigo: true,
+          imagen: true,
+          lts: true,
+          tipo: true,
           descripcion: true,
           createdAt: true,
           updatedAt: true,
@@ -92,6 +98,7 @@ export class ProductoFabricadoService extends PrismaClient implements OnModuleIn
   }
 
 
+  
 
 
 // Método para obtener el detalle completo de un producto fabricado por su ID

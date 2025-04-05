@@ -1,6 +1,7 @@
 import { Type } from "class-transformer";
-import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from "class-validator";
+import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from "class-validator";
 import { CreateComponenteInsumoDto } from "./create-componente-insumo.dto";
+
 
 export class CreateRecetaDto {
 
@@ -20,6 +21,10 @@ export class CreateRecetaDto {
   @IsString()
   @IsNotEmpty()
   nombre: string;
+
+  @IsString()
+  @IsNotEmpty()
+  tipo: string;
 
   @IsArray()
   @ValidateNested({ each: true })

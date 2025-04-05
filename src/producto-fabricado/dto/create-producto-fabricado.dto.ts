@@ -1,6 +1,9 @@
 import { Type } from "class-transformer";
-import { IsArray, IsString, ValidateNested } from "class-validator";
+import { IsArray, IsEnum, IsNumber, IsString, ValidateNested } from "class-validator";
 import { CreateSckidSectionDto } from "./create-skid-section.dto";
+import { TipoProductoFabricado } from "@prisma/client";
+
+
 
 export class CreateProductoFabricadoDto {
     @IsString()
@@ -11,6 +14,12 @@ export class CreateProductoFabricadoDto {
 
     @IsString()
     imagen: string;
+
+    @IsNumber()
+    lts: number;
+
+    @IsEnum(TipoProductoFabricado)
+    tipo: TipoProductoFabricado;
 
     @IsArray()
     @ValidateNested({each: true})

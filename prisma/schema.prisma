@@ -77,6 +77,13 @@ enum Prioridad {
   ALTA
 }
 
+enum TipoProductoFabricado{
+  ELECTRICO
+  SOLAR
+  NEUMATICO
+  RESERVA
+}
+
 // =====================
 //      ENTIDADES BASE
 // =====================
@@ -426,6 +433,8 @@ model ProductoFabricado {
   descripcion String?
   imagen String?
   secciones   SkidSection[] // <== Agregamos la relación a secciones
+  tipo        TipoProductoFabricado?
+  lts         Float? // Litros de capacidad (si aplica)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

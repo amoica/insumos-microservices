@@ -37,6 +37,20 @@ export class RecetaController {
       });
     }
   }
+
+  @MessagePattern({cmd:'findRecetaByTipo'})
+  async findRecetaByTipo(@Payload('tipo') tipo: string) {
+    try {
+      return await this.recetaService.findRecetaByTipo(tipo);
+    } catch (error) {
+      console.error('Error en el gateway de findRecetaByTipo:', error);
+  
+      throw new RpcException({
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error.message || 'Error al buscar la receta por tipo'
+      });
+    }
+  }
   
 
   @MessagePattern({cmd:'removeReceta'})
