@@ -13,6 +13,7 @@ Table Contacto {
   cliente Cliente
   proveedorId Int
   proveedor Proveedor
+  PedidoCliente PedidoCliente [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
 }
@@ -54,7 +55,6 @@ Table Cliente {
   condicionFiscal String
   tipoCliente String
   observaciones String
-  ordenesFabricacion OrdenFabricacion [not null]
   ordenesTrabajoCampo OrdenTrabajoCampo [not null]
   tickets Ticket [not null]
   contactos Contacto [not null]
@@ -215,26 +215,41 @@ Table Movimiento {
 
 Table OrdenFabricacion {
   id Int [pk, increment]
-  numero String [unique, not null]
+  codigo String [unique, not null]
   productoFabricadoId Int [not null]
   productoFabricado ProductoFabricado [not null]
   cantidad Int [not null]
-  estado EstadoOrdenFabricacion [not null]
+  estado EstadoOrdenFabricacion [not null, default: 'CREADA']
   fechaEmision DateTime [default: `now()`, not null]
   fechaEntrega DateTime
+  yacimiento String
   observaciones String
-  clienteId Int
-  cliente Cliente
-  pedidoClienteId Int
-  pedidoCliente PedidoCliente
+  nroPresupuesto Int
   prioridad Prioridad [default: 'MEDIA']
-  snapshotSkid Json
+  pedidoClienteId Int [not null]
+  pedidoCliente PedidoCliente [not null]
   reservas Reserva [not null]
   movimientos Movimiento [not null]
   remitos Remito [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
   SolicitudMaterial SolicitudMaterial [not null]
+  revisiones OrdenFabricacionRevision [not null]
+}
+
+Table OrdenFabricacionRevision {
+  id Int [pk, increment]
+  ordenFabricacionId Int [not null]
+  ordenFabricacion OrdenFabricacion [not null]
+  snapshot Json [not null]
+  version Int [not null]
+  revisionObservacion String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (ordenFabricacionId, version) [unique]
+  }
 }
 
 Table PedidoCliente {
@@ -243,7 +258,9 @@ Table PedidoCliente {
   fecha DateTime [default: `now()`, not null]
   clienteId Int [not null]
   cliente Cliente [not null]
-  documento String
+  contactoId Int
+  contacto Contacto
+  adjunto String
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
   OrdenFabricacion OrdenFabricacion [not null]
@@ -290,6 +307,7 @@ Table RecetaProducto {
   codigo String [unique, not null]
   nombre String [not null]
   tipo String
+  imagenUrl String
   componentes ComponenteProducto [not null]
   productos ProductoFabricado [not null]
   createdAt DateTime [default: `now()`, not null]
@@ -495,6 +513,8 @@ Table ProductoRecetas {
 }
 
 Enum EstadoOrdenFabricacion {
+  CREADA
+  APROBADA
   PENDIENTE
   EN_PROCESO
   FINALIZADA
@@ -596,11 +616,13 @@ Ref: Movimiento.ordenTrabajoCampoId > OrdenTrabajoCampo.id
 
 Ref: OrdenFabricacion.productoFabricadoId > ProductoFabricado.id
 
-Ref: OrdenFabricacion.clienteId > Cliente.id
-
 Ref: OrdenFabricacion.pedidoClienteId > PedidoCliente.id
 
+Ref: OrdenFabricacionRevision.ordenFabricacionId > OrdenFabricacion.id
+
 Ref: PedidoCliente.clienteId > Cliente.id
+
+Ref: PedidoCliente.contactoId > Contacto.id
 
 Ref: SkidSection.productoFabricadoId > ProductoFabricado.id
 

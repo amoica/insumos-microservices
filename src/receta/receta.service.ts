@@ -64,13 +64,31 @@ export class RecetaService extends PrismaClient implements OnModuleInit {
 
   findRecetaByTipo(tipo: string) {
     return this.recetaProducto.findMany({
-      where: { tipo }
+      where: { tipo },
+      
     });
   }
 
 
   findOne(id: number) {
-    return `This action returns a #${id} receta`;
+    return this.recetaProducto.findUnique({
+      where: { id },
+      include:{
+        componentes:{
+          select:{
+            cantidad:true,
+            insumo:{
+              select:{
+                id:true,
+                code:true,
+                name:true,
+                unidad:true,
+              }
+            }
+          }
+        }
+      }
+    });
   }
 
   async update(id: number, updateRecetaDto: UpdateRecetaDto) {

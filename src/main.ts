@@ -1,8 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, Logger, ValidationPipe } from '@nestjs/common';
 import { envs } from './config';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { ValidationError } from 'class-validator';
 
 async function bootstrap() {
 
@@ -21,7 +22,17 @@ async function bootstrap() {
   app.useGlobalPipes( 
     new ValidationPipe({ 
     whitelist: true, 
+    transform: true,
     forbidNonWhitelisted: true, 
+    exceptionFactory: (errors: ValidationError[]) => {
+      const detailedErrors = errors.map(error => ({
+        property: error.property,
+        constraints: error.constraints,
+        children: error.children,
+      }));
+      console.error('❌ Errores de validación:', JSON.stringify(detailedErrors, null, 2));
+      return new BadRequestException('Error de validación');
+    }
     }) 
    );
 

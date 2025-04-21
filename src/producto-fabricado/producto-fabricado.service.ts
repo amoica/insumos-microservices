@@ -2,6 +2,8 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { CreateProductoFabricadoDto } from './dto/create-producto-fabricado.dto';
 import { UpdateProductoFabricadoDto } from './dto/update-producto-fabricado.dto';
 import { PrismaClient } from '@prisma/client';
+import { TipoProductoFabricado } from "@prisma/client";
+
 
 @Injectable()
 export class ProductoFabricadoService extends PrismaClient implements OnModuleInit {
@@ -47,6 +49,19 @@ export class ProductoFabricadoService extends PrismaClient implements OnModuleIn
       throw error;
     }
 
+  }
+
+
+  async findAllByTipo(tipo: TipoProductoFabricado) {
+    return await this.productoFabricado.findMany({
+      where: {tipo},
+      select: {
+        id: true,
+        nombre: true,
+        codigo: true,
+        lts: true,
+      },
+    });
   }
 
   async findAll() {

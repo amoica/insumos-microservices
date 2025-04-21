@@ -3,6 +3,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { ProductoFabricadoService } from './producto-fabricado.service';
 import { CreateProductoFabricadoDto } from './dto/create-producto-fabricado.dto';
 import { UpdateProductoFabricadoDto } from './dto/update-producto-fabricado.dto';
+import { TipoProductoFabricado } from '@prisma/client';
 
 @Controller()
 export class ProductoFabricadoController {
@@ -31,5 +32,11 @@ export class ProductoFabricadoController {
   @MessagePattern('removeProductoFabricado')
   remove(@Payload() id: number) {
     return this.productoFabricadoService.remove(id);
+  }
+
+  @MessagePattern({cmd:'findAllByTipo'})
+  findAllByTipo(@Payload() tipo: TipoProductoFabricado) {
+    console.log('tipo', tipo);
+    return this.productoFabricadoService.findAllByTipo(tipo);
   }
 }

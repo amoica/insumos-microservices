@@ -6,10 +6,11 @@ import { ProveedorModule } from './proveedor/proveedor.module';
 import { ContactoModule } from './contacto/contacto.module';
 import { RecetaModule } from './receta/receta.module';
 import { ProductoFabricadoModule } from './producto-fabricado/producto-fabricado.module';
+import { OrdenFabricacionModule } from './orden-fabricacion/orden-fabricacion.module';
 
 
 @Module({
-  imports: [InsumosModule, DepositosModule, ClienteModule, ProveedorModule, ContactoModule, RecetaModule, ProductoFabricadoModule],
+  imports: [InsumosModule, DepositosModule, ClienteModule, ProveedorModule, ContactoModule, RecetaModule, ProductoFabricadoModule, OrdenFabricacionModule],
   controllers: [],
   providers: [],
 })
