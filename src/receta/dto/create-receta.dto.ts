@@ -32,7 +32,7 @@ export class CreateRecetaDto {
 
   @IsString()
   @IsOptional()
-  imagenUrl: string;
+  imagen: string;
 
   @IsArray()
   @ValidateNested({ each: true })

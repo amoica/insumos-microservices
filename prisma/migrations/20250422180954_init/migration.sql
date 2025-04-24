@@ -84,18 +84,47 @@ CREATE TABLE `Proveedor` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `InsumoCategoria` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(191) NOT NULL,
+    `descripccion` VARCHAR(191) NULL,
+
+    UNIQUE INDEX `InsumoCategoria_name_key`(`name`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `Insumo` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(191) NOT NULL,
     `code` VARCHAR(191) NOT NULL,
     `description` VARCHAR(191) NULL,
+    `unidad` VARCHAR(191) NOT NULL DEFAULT 'SIN UNIDAD MEDIDA',
+    `imagenUrl` VARCHAR(191) NOT NULL,
     `minimunStock` INTEGER NULL,
     `isInventoriable` BOOLEAN NOT NULL DEFAULT true,
+    `sinonimo` VARCHAR(191) NULL,
     `available` BOOLEAN NOT NULL DEFAULT true,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
+    `categoriaId` INTEGER NULL,
 
     UNIQUE INDEX `Insumo_code_key`(`code`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `InsumoProveedor` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `insumoId` INTEGER NOT NULL,
+    `proveedorId` INTEGER NOT NULL,
+    `codigoProveedor` VARCHAR(191) NOT NULL,
+    `precioUnitario` DOUBLE NULL,
+    `fechaActualizacion` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `InsumoProveedor_insumoId_proveedorId_key`(`insumoId`, `proveedorId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -180,20 +209,50 @@ CREATE TABLE `Movimiento` (
 -- CreateTable
 CREATE TABLE `OrdenFabricacion` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `numero` VARCHAR(191) NOT NULL,
+    `codigo` VARCHAR(191) NOT NULL,
     `productoFabricadoId` INTEGER NOT NULL,
     `cantidad` INTEGER NOT NULL,
-    `estado` ENUM('PENDIENTE', 'EN_PROCESO', 'FINALIZADA', 'CANCELADA') NOT NULL,
+    `estado` ENUM('CREADA', 'APROBADA', 'PENDIENTE', 'EN_PROCESO', 'FINALIZADA', 'CANCELADA') NOT NULL DEFAULT 'CREADA',
     `fechaEmision` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `fechaEntrega` DATETIME(3) NULL,
+    `yacimiento` VARCHAR(191) NULL,
     `observaciones` VARCHAR(191) NULL,
-    `clienteId` INTEGER NULL,
-    `ordenCompraCliente` VARCHAR(191) NULL,
+    `nroPresupuesto` INTEGER NULL,
     `prioridad` ENUM('BAJA', 'MEDIA', 'ALTA') NULL DEFAULT 'MEDIA',
+    `pedidoClienteId` INTEGER NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
-    UNIQUE INDEX `OrdenFabricacion_numero_key`(`numero`),
+    UNIQUE INDEX `OrdenFabricacion_codigo_key`(`codigo`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `OrdenFabricacionRevision` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `ordenFabricacionId` INTEGER NOT NULL,
+    `snapshot` JSON NOT NULL,
+    `version` INTEGER NOT NULL,
+    `revisionObservacion` VARCHAR(191) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `OrdenFabricacionRevision_ordenFabricacionId_version_key`(`ordenFabricacionId`, `version`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `PedidoCliente` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `numero` VARCHAR(191) NOT NULL,
+    `fecha` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `clienteId` INTEGER NOT NULL,
+    `contactoId` INTEGER NULL,
+    `adjunto` VARCHAR(191) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `PedidoCliente_numero_key`(`numero`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -203,6 +262,9 @@ CREATE TABLE `ProductoFabricado` (
     `nombre` VARCHAR(191) NOT NULL,
     `codigo` VARCHAR(191) NOT NULL,
     `descripcion` VARCHAR(191) NULL,
+    `imagen` VARCHAR(191) NULL,
+    `tipo` ENUM('ELECTRICO', 'SOLAR', 'NEUMATICO', 'RESERVA') NULL,
+    `lts` DOUBLE NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -211,15 +273,38 @@ CREATE TABLE `ProductoFabricado` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `SkidSection` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `nombre` VARCHAR(191) NULL,
+    `baseComponenteId` INTEGER NULL,
+    `productoFabricadoId` INTEGER NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `SkidSectionItem` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `insumoId` INTEGER NOT NULL,
+    `cantidad` DOUBLE NOT NULL,
+    `sectionId` INTEGER NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `RecetaProducto` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `productoFabricadoId` INTEGER NOT NULL,
     `version` INTEGER NOT NULL,
     `esActiva` BOOLEAN NOT NULL DEFAULT true,
+    `codigo` VARCHAR(191) NOT NULL,
+    `nombre` VARCHAR(191) NOT NULL,
+    `tipo` VARCHAR(191) NULL,
+    `imagenUrl` VARCHAR(191) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
-    UNIQUE INDEX `RecetaProducto_productoFabricadoId_version_key`(`productoFabricadoId`, `version`),
+    UNIQUE INDEX `RecetaProducto_codigo_key`(`codigo`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -230,7 +315,6 @@ CREATE TABLE `ComponenteProducto` (
     `productoFabricadoId` INTEGER NULL,
     `insumoId` INTEGER NOT NULL,
     `cantidad` DOUBLE NOT NULL,
-    `unidad` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`id`)
@@ -425,6 +509,15 @@ CREATE TABLE `ArticuloPresupuesto` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `_ProductoRecetas` (
+    `A` INTEGER NOT NULL,
+    `B` INTEGER NOT NULL,
+
+    UNIQUE INDEX `_ProductoRecetas_AB_unique`(`A`, `B`),
+    INDEX `_ProductoRecetas_B_index`(`B`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `Contacto` ADD CONSTRAINT `Contacto_clienteId_fkey` FOREIGN KEY (`clienteId`) REFERENCES `Cliente`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -433,6 +526,15 @@ ALTER TABLE `Contacto` ADD CONSTRAINT `Contacto_proveedorId_fkey` FOREIGN KEY (`
 
 -- AddForeignKey
 ALTER TABLE `Notificacion` ADD CONSTRAINT `Notificacion_usuarioId_fkey` FOREIGN KEY (`usuarioId`) REFERENCES `Usuario`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Insumo` ADD CONSTRAINT `Insumo_categoriaId_fkey` FOREIGN KEY (`categoriaId`) REFERENCES `InsumoCategoria`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `InsumoProveedor` ADD CONSTRAINT `InsumoProveedor_insumoId_fkey` FOREIGN KEY (`insumoId`) REFERENCES `Insumo`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `InsumoProveedor` ADD CONSTRAINT `InsumoProveedor_proveedorId_fkey` FOREIGN KEY (`proveedorId`) REFERENCES `Proveedor`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `PrecioProveedorInsumo` ADD CONSTRAINT `PrecioProveedorInsumo_insumoId_fkey` FOREIGN KEY (`insumoId`) REFERENCES `Insumo`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -477,10 +579,25 @@ ALTER TABLE `Movimiento` ADD CONSTRAINT `Movimiento_ordenTrabajoCampoId_fkey` FO
 ALTER TABLE `OrdenFabricacion` ADD CONSTRAINT `OrdenFabricacion_productoFabricadoId_fkey` FOREIGN KEY (`productoFabricadoId`) REFERENCES `ProductoFabricado`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `OrdenFabricacion` ADD CONSTRAINT `OrdenFabricacion_clienteId_fkey` FOREIGN KEY (`clienteId`) REFERENCES `Cliente`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `OrdenFabricacion` ADD CONSTRAINT `OrdenFabricacion_pedidoClienteId_fkey` FOREIGN KEY (`pedidoClienteId`) REFERENCES `PedidoCliente`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `RecetaProducto` ADD CONSTRAINT `RecetaProducto_productoFabricadoId_fkey` FOREIGN KEY (`productoFabricadoId`) REFERENCES `ProductoFabricado`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `OrdenFabricacionRevision` ADD CONSTRAINT `OrdenFabricacionRevision_ordenFabricacionId_fkey` FOREIGN KEY (`ordenFabricacionId`) REFERENCES `OrdenFabricacion`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `PedidoCliente` ADD CONSTRAINT `PedidoCliente_clienteId_fkey` FOREIGN KEY (`clienteId`) REFERENCES `Cliente`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `PedidoCliente` ADD CONSTRAINT `PedidoCliente_contactoId_fkey` FOREIGN KEY (`contactoId`) REFERENCES `Contacto`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `SkidSection` ADD CONSTRAINT `SkidSection_productoFabricadoId_fkey` FOREIGN KEY (`productoFabricadoId`) REFERENCES `ProductoFabricado`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `SkidSectionItem` ADD CONSTRAINT `SkidSectionItem_sectionId_fkey` FOREIGN KEY (`sectionId`) REFERENCES `SkidSection`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `SkidSectionItem` ADD CONSTRAINT `SkidSectionItem_insumoId_fkey` FOREIGN KEY (`insumoId`) REFERENCES `Insumo`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `ComponenteProducto` ADD CONSTRAINT `ComponenteProducto_recetaProductoId_fkey` FOREIGN KEY (`recetaProductoId`) REFERENCES `RecetaProducto`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
@@ -565,3 +682,9 @@ ALTER TABLE `ArticuloPresupuesto` ADD CONSTRAINT `ArticuloPresupuesto_presupuest
 
 -- AddForeignKey
 ALTER TABLE `ArticuloPresupuesto` ADD CONSTRAINT `ArticuloPresupuesto_insumoId_fkey` FOREIGN KEY (`insumoId`) REFERENCES `Insumo`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `_ProductoRecetas` ADD CONSTRAINT `_ProductoRecetas_A_fkey` FOREIGN KEY (`A`) REFERENCES `ProductoFabricado`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `_ProductoRecetas` ADD CONSTRAINT `_ProductoRecetas_B_fkey` FOREIGN KEY (`B`) REFERENCES `RecetaProducto`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

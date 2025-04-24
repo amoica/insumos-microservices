@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { CreateInsumoDto } from './dto/create-insumo.dto';
 import { UpdateInsumoDto } from './dto/update-insumo.dto';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { RpcException } from '@nestjs/microservices';
 import { connect } from 'http2';
@@ -14,14 +14,14 @@ export class InsumosService extends PrismaClient implements OnModuleInit {
   onModuleInit() {
     this.$connect();
     this.logger.log('Database conected');
-    
+
 
   }
   create(createInsumoDto: CreateInsumoDto) {
 
     // Separamos los datos del insumo y, si existen, la relación con proveedores
 
-    const {proveedores, ...inusumoData} = createInsumoDto;
+    const { proveedores, ...inusumoData } = createInsumoDto;
 
 
     return this.insumo.create({
@@ -29,8 +29,8 @@ export class InsumosService extends PrismaClient implements OnModuleInit {
         ...inusumoData,
         ...(proveedores && {
           insumoProveedor: {
-            create: proveedores.map((prov)=>({
-              proveedor: {connect: {id: prov.proveedorId}},
+            create: proveedores.map((prov) => ({
+              proveedor: { connect: { id: prov.proveedorId } },
               codigoProveedor: prov.codigoProveedor,
 
               //El precio puede quedar nulo
@@ -45,30 +45,55 @@ export class InsumosService extends PrismaClient implements OnModuleInit {
 
   async findAll(paginationDto: PaginationDto) {
 
-    const {page, limit} = paginationDto;
+    const { page, limit, search } = paginationDto;
+
+    // Construye el where dinámico:
+    const where: Prisma.InsumoWhereInput = {
+      available: true,
+      ...(search
+        ? {
+          OR: [
+            { name: { contains: search } },
+            { code: { contains: search } },
+            { description: { contains: search } },
+          ]
+        }
+        : {}
+      )
+    };
 
 
-    const totalPage = await this.insumo.count({where:{available:true}});
+    const totalPage = await this.insumo.count({ where: { available: true } });
     const lastPage = Math.ceil(totalPage / limit);
 
     return {
       data: await this.insumo.findMany({
-      skip:(page-1) * limit,
-      take:limit,
-      where:{
-        available:true,
-      },
-      include:{
-        insumoProveedor:true
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          insumoProveedor: true
+        }
+      }),
+      meta: {
+        page: page,
+        total: totalPage,
+        lastPage
       }
-    }),
-    meta:{
-      page:page,
-      total:totalPage,
-      lastPage
-    }
 
-  };
+    };
+  }
+
+
+  async findAllNotfilters() {
+
+
+    // Construye el where dinámico:
+
+
+    return {
+      data: await this.insumo.findMany(),
+    };
   }
 
   async findOne(id: number) {
@@ -76,20 +101,25 @@ export class InsumosService extends PrismaClient implements OnModuleInit {
     const insumo = await this.insumo.findUnique({
       where: {
         id,
-        available:true
+        available: true
       },
-      include:{
-        insumoProveedor:{
-          include:{
-            proveedor:true
+      include: {
+        insumoProveedor: {
+          include: {
+            proveedor: true,
+          }
+        },
+        categoria: {
+          select: {
+            name: true,
           }
         }
       }
     })
 
-    if(!insumo){
+    if (!insumo) {
       throw new RpcException({
-        message:`Insunmo with id #${id} not found`,
+        message: `Insunmo with id #${id} not found`,
         status: HttpStatus.BAD_REQUEST
       })
     }
@@ -101,10 +131,10 @@ export class InsumosService extends PrismaClient implements OnModuleInit {
   async update(id: number, updateInsumoDto: UpdateInsumoDto) {
     // Separamos la lista de proveedores de los demás datos
     const { proveedores, id: __, ...data } = updateInsumoDto;
-  
+
     // Nos aseguramos de que el insumo existe
     await this.findOne(id);
-  
+
     // Actualizamos el insumo y reemplazamos la relación de proveedores
     const updateInsumo = await this.insumo.update({
       where: { id },
@@ -122,7 +152,7 @@ export class InsumosService extends PrismaClient implements OnModuleInit {
         },
       },
     });
-  
+
     return updateInsumo;
   }
 
@@ -130,27 +160,27 @@ export class InsumosService extends PrismaClient implements OnModuleInit {
 
     await this.findOne(id);
     const insumo = await this.insumo.update({
-      where:{id},
-      data:{
-        available : false
+      where: { id },
+      data: {
+        available: false
       }
     })
     return insumo;
   }
 
-  async validateProducts(ids: number[]){
-    
+  async validateProducts(ids: number[]) {
+
     ids = Array.from(new Set(ids));
 
     const insumos = await this.insumo.findMany({
       where: {
         id: {
-          in:ids
+          in: ids
         }
       }
     });
 
-    if(insumos.length != ids.length){
+    if (insumos.length != ids.length) {
       throw new RpcException({
         message: 'Some insumos were not found',
         status: HttpStatus.BAD_REQUEST

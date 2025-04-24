@@ -1,3 +1,0 @@
--- AlterTable
-ALTER TABLE `ProductoFabricado` ADD COLUMN `lts` DOUBLE NULL,
-    MODIFY `tipo` ENUM('ELECTRICO', 'SOLAR', 'NEUMATICO', 'RESERVA') NULL;

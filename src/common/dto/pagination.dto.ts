@@ -13,4 +13,8 @@ export class PaginationDto{
     @IsOptional()
     @Type(()=> Number)
     limit?: number = 10;
+
+    @IsOptional()
+    @Type(() => String)
+    search?: string; 
 }

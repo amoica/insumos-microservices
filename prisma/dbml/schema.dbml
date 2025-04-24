@@ -85,6 +85,13 @@ Table Proveedor {
   updatedAt DateTime [not null]
 }
 
+Table InsumoCategoria {
+  id Int [pk, increment]
+  name String [unique, not null]
+  descripccion String
+  Insumo Insumo [not null]
+}
+
 Table Insumo {
   id Int [pk, increment]
   name String [not null]
@@ -98,6 +105,8 @@ Table Insumo {
   available Boolean [not null, default: true]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
+  categoriaId Int
+  categoria InsumoCategoria
   inventario Inventario [not null]
   reservas Reserva [not null]
   componenteProductos ComponenteProducto [not null]
@@ -307,7 +316,7 @@ Table RecetaProducto {
   codigo String [unique, not null]
   nombre String [not null]
   tipo String
-  imagenUrl String
+  imagen String
   componentes ComponenteProducto [not null]
   productos ProductoFabricado [not null]
   createdAt DateTime [default: `now()`, not null]
@@ -583,6 +592,8 @@ Ref: Contacto.clienteId > Cliente.id
 Ref: Contacto.proveedorId > Proveedor.id
 
 Ref: Notificacion.usuarioId > Usuario.id
+
+Ref: Insumo.categoriaId > InsumoCategoria.id
 
 Ref: InsumoProveedor.insumoId > Insumo.id
 

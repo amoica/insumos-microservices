@@ -7,29 +7,35 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 
 @Controller('insumos')
 export class InsumosController {
-  constructor(private readonly insumosService: InsumosService) {}
+  constructor(private readonly insumosService: InsumosService) { }
 
   //@Post()
 
-  @MessagePattern({cmd: 'create_insumo'})
+  @MessagePattern({ cmd: 'create_insumo' })
   create(@Payload() createInsumoDto: any) {
     return this.insumosService.create(createInsumoDto);
   }
 
   //@Get()
-  @MessagePattern({cmd: 'find_all_insumos'})
-  findAll( @Payload() paginationDto: PaginationDto) {
+  @MessagePattern({ cmd: 'find_all_insumos' })
+  findAll(@Payload() paginationDto: PaginationDto) {
     return this.insumosService.findAll(paginationDto);
   }
 
+
+  //@Get()
+  @MessagePattern({ cmd: 'find_all_insumos_not_filters' })
+  findAllNotFilters() {
+    return this.insumosService.findAllNotfilters();
+  }
   //@Get(':id')
-  @MessagePattern({cmd: 'find_one_insumo'})
+  @MessagePattern({ cmd: 'find_one_insumo' })
   findOne(@Payload('id', ParseIntPipe) id: number) {
     return this.insumosService.findOne(+id);
   }
 
   //@Patch(':id')
-  @MessagePattern({cmd: 'update_insumo'})
+  @MessagePattern({ cmd: 'update_insumo' })
   update(
     //@Param('id', ParseIntPipe) id: number, 
     //@Body() updateInsumoDto: UpdateInsumoDto
@@ -38,14 +44,14 @@ export class InsumosController {
   }
 
   //@Delete(':id')
-  @MessagePattern({cmd: 'delete_insumo'})
+  @MessagePattern({ cmd: 'delete_insumo' })
   remove(@Payload('id', ParseIntPipe) id: number) {
     return this.insumosService.remove(+id);
   }
 
 
-  @MessagePattern({cmd: 'validate_products'})
-  validateProduct(@Payload() ids:number[]){
+  @MessagePattern({ cmd: 'validate_products' })
+  validateProduct(@Payload() ids: number[]) {
     return this.insumosService.validateProducts(ids);
   }
 }
