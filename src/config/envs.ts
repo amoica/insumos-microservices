@@ -2,12 +2,12 @@ import 'dotenv/config';
 import * as joi from 'joi';
 
 interface EnvVars{
-    PORT_INSUMO: number;
+    PORT_INSUMOS: number;
     DATABASE_URL:string;
 }
 
 const envsSchema = joi.object({
-    PORT_INSUMO: joi.number().required(),
+    PORT_INSUMOS: joi.number().required(),
     DATABASE_URL: joi.string().required()
 })
 .unknown(true);
@@ -21,6 +21,6 @@ if(error){
 const EnvVars: EnvVars = value;
 
 export const envs = {
-    port_insumo: EnvVars.PORT_INSUMO,
+    port_insumos: EnvVars.PORT_INSUMOS,
     databaseUrl: EnvVars.DATABASE_URL,
 }
