@@ -15,7 +15,7 @@ async function bootstrap() {
   {
     transport: Transport.TCP,
     options:{
-      port: envs.port
+      port: envs.port_insumo
     }
   });
 
@@ -36,7 +36,7 @@ async function bootstrap() {
     }) 
    );
 
-   logger.log(`Insumos Microservice running on port ${envs.port}`);
+   logger.log(`Insumos Microservice running on port ${envs.port_insumo}`);
 
    await app.listen();
 
