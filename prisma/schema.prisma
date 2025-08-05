@@ -157,7 +157,6 @@ model Cliente {
   tipoCliente     String?
   observaciones   String?
 
-
   ordenesTrabajoCampo OrdenTrabajoCampo[]
 
   // Relación con tickets (servicio/soporte)
@@ -170,6 +169,8 @@ model Cliente {
   updatedAt DateTime @updatedAt
 
   PedidoCliente PedidoCliente[]
+
+  Yacimiento Yacimiento[]
 }
 
 model Proveedor {
@@ -209,25 +210,26 @@ model Proveedor {
 // =====================
 
 model InsumoCategoria {
-  id   Int    @id @default(autoincrement())
-  name String @unique
+  id           Int      @id @default(autoincrement())
+  name         String   @unique
   descripccion String? // Descripción de la categoría
-  Insumo Insumo[]
+  Insumo       Insumo[]
 }
 
 model Insumo {
-  id              Int      @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   name            String
-  code            String   @unique
+  code            String           @unique
   description     String?
-  unidad          String   @default("SIN UNIDAD MEDIDA")
+  Tipo            String?
+  unidad          String           @default("SIN UNIDAD MEDIDA")
   imagenUrl       String
   minimunStock    Int? // Stock mínimo para disparar solicitud
-  isInventoriable Boolean  @default(true)
+  isInventoriable Boolean          @default(true)
   sinonimo        String? // Sinónimo o nombre alternativo
-  available       Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  available       Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   categoriaId     Int?
   categoria       InsumoCategoria? @relation(fields: [categoriaId], references: [id])
 
@@ -259,8 +261,6 @@ model Insumo {
   SolicitudItem   SolicitudItem[]
   SkidSectionItem SkidSectionItem[]
 }
-
-
 
 model InsumoProveedor {
   id              Int       @id @default(autoincrement())
@@ -379,6 +379,9 @@ model Movimiento {
   ordenFabricacionId Int?
   ordenFabricacion   OrdenFabricacion? @relation(fields: [ordenFabricacionId], references: [id])
 
+  ordenCompraId Int?
+  ordenCompra   OrdenCompra? @relation(fields: [ordenCompraId], references: [id])
+
   ordenTrabajoCampoId Int?
   ordenTrabajoCampo   OrdenTrabajoCampo? @relation(fields: [ordenTrabajoCampoId], references: [id])
 
@@ -400,13 +403,14 @@ model OrdenFabricacion {
   estado              EstadoOrdenFabricacion @default(CREADA)
   fechaEmision        DateTime               @default(now())
   fechaEntrega        DateTime?
-  yacimiento          String?
+  yacimientoId        Int
+  yacimiento          Yacimiento             @relation(fields: [yacimientoId], references: [id])
   observaciones       String?
   nroPresupuesto      Int?
   prioridad           Prioridad?             @default(MEDIA)
   // Campo opcional para almacenar la referencia a la orden de compra del cliente
   pedidoClienteId     Int
-  pedidoCliente       PedidoCliente         @relation(fields: [pedidoClienteId], references: [id])
+  pedidoCliente       PedidoCliente          @relation(fields: [pedidoClienteId], references: [id])
 
   reservas    Reserva[]
   movimientos Movimiento[]
@@ -419,7 +423,6 @@ model OrdenFabricacion {
 
   // Relación a revisiones de la orden, si optas por versionamiento completo.
   revisiones OrdenFabricacionRevision[]
-
 }
 
 model OrdenFabricacionRevision {
@@ -508,7 +511,7 @@ model RecetaProducto {
   codigo      String               @unique
   nombre      String
   tipo        String?
-  imagen   String?
+  imagen      String?
   componentes ComponenteProducto[]
 
   productos ProductoFabricado[] @relation("ProductoRecetas")
@@ -619,6 +622,8 @@ model OrdenCompra {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  Movimiento Movimiento[]
 }
 
 // =====================
@@ -783,4 +788,20 @@ model ArticuloPresupuesto {
   insumo         Insumo      @relation(fields: [insumoId], references: [id])
   cantidad       Int
   precioUnitario Float
+}
+
+model Yacimiento {
+  id        Int     @id @default(autoincrement())
+  nombre    String
+  ubicacion String
+  estado    Boolean
+
+  // Nuevos campos para geo‐coordenadas
+  lat Float? // latitud en grados decimales
+  lon Float? // longitud en grados decimales
+
+  clienteId Int
+  cliente   Cliente @relation(fields: [clienteId], references: [id])
+
+  OrdenFabricacion OrdenFabricacion[]
 }

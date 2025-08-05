@@ -3,26 +3,26 @@ import { Type } from "class-transformer";
 import { IsDate, IsInt, IsOptional, IsString, IsNotEmpty } from 'class-validator';
 
 export class PedidoClienteDto {
-    @IsString()
-    @IsNotEmpty()
-    numero: string;
-  
-    @IsInt()
-    clienteId: number;
-  
-    @IsOptional()
-    @Type(() => Date)
-    @IsDate()
-    fecha?: Date;
-  
-    @IsOptional()
-    @IsInt()
-    contactoId?: number;
-  
-    @IsOptional()
-    @IsString()
-    adjunto?: string;
-  }
+  @IsString()
+  @IsNotEmpty()
+  numero: string;
+
+  @IsInt()
+  clienteId: number;
+
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  fecha?: Date;
+
+  @IsOptional()
+  @IsInt()
+  contactoId?: number;
+
+  @IsOptional()
+  @IsString()
+  adjunto?: string;
+}
 
 export class CreateOrdenFabricacionDto {
   @IsString()
@@ -51,9 +51,9 @@ export class CreateOrdenFabricacionDto {
   @IsNotEmpty()
   prioridad?: Prioridad;
 
-  @IsString()
-  @IsNotEmpty()
-  yacimiento: string;
+  @IsInt()
+  yacimientoId: number;
+
 
   @IsOptional()
   snapshotSkid?: any; // Si deseas validar el JSON, puedes crear un DTO anidado, pero por ahora lo dejamos como any

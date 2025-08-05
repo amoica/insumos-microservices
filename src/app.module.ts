@@ -7,10 +7,11 @@ import { ContactoModule } from './contacto/contacto.module';
 import { RecetaModule } from './receta/receta.module';
 import { ProductoFabricadoModule } from './producto-fabricado/producto-fabricado.module';
 import { OrdenFabricacionModule } from './orden-fabricacion/orden-fabricacion.module';
+import { YacimientoModule } from './yacimiento/yacimiento.module';
 
 
 @Module({
-  imports: [InsumosModule, DepositosModule, ClienteModule, ProveedorModule, ContactoModule, RecetaModule, ProductoFabricadoModule, OrdenFabricacionModule],
+  imports: [InsumosModule, DepositosModule, ClienteModule, ProveedorModule, ContactoModule, RecetaModule, ProductoFabricadoModule, OrdenFabricacionModule, YacimientoModule],
   controllers: [],
   providers: [],
 })
