@@ -3,6 +3,7 @@ import {
   IsOptional,
   IsArray,
   ValidateNested,
+  IsNumber,
 } from 'class-validator';
 
 import { Type } from 'class-transformer';
@@ -10,6 +11,11 @@ import { CreateContactoDto } from 'src/contacto/dto/create-contacto.dto';
 
 
 export class CreateClienteDto {
+
+  @IsNumber()
+  @IsOptional()
+  id?: number
+
   @IsString()
   public nombre: string;
 

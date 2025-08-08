@@ -1,6 +1,6 @@
 import { EstadoOrdenFabricacion, Prioridad } from "@prisma/client";
 import { Type } from "class-transformer";
-import { IsDate, IsInt, IsOptional, IsString, IsNotEmpty } from 'class-validator';
+import { IsDate, IsInt, IsOptional, IsString, IsNotEmpty, IsNumber } from 'class-validator';
 
 export class PedidoClienteDto {
   @IsString()
@@ -51,8 +51,11 @@ export class CreateOrdenFabricacionDto {
   @IsNotEmpty()
   prioridad?: Prioridad;
 
+  
   @IsInt()
-  yacimientoId: number;
+  @IsNotEmpty()
+  yacimiento: number;
+
 
 
   @IsOptional()

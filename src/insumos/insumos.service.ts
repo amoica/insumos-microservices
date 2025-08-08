@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger, OnModuleInit, Query } from '@nestjs/common';
 import { CreateInsumoDto } from './dto/create-insumo.dto';
 import { UpdateInsumoDto } from './dto/update-insumo.dto';
 import { Prisma, PrismaClient } from '@prisma/client';
@@ -187,5 +187,85 @@ export class InsumosService extends PrismaClient implements OnModuleInit {
       })
     }
     return insumos;
+  }
+
+
+  async findInsumos(params: {
+    tipoInsumo?: string;
+    categoria?: string;
+    termino?: string;
+  }) {
+    const condiciones: Prisma.InsumoWhereInput[] = [];
+
+    if (params.tipoInsumo) {
+      condiciones.push(this.buildTipoInsumoCondition(params.tipoInsumo));
+    }
+
+    if (params.categoria) {
+      condiciones.push(this.buildCategoriaCondition(params.categoria));
+    }
+
+    if (params.termino) {
+      condiciones.push(this.buildTerminoCondition(params.termino));
+    }
+
+    return this.insumo.findMany({
+      where: condiciones.length > 0 ? { AND: condiciones } : undefined,
+      select:{
+        name:true,
+        id:true
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  private buildTipoInsumoCondition(tipoInsumo: string): Prisma.InsumoWhereInput {
+    return {
+      OR: [
+        { name: { contains: tipoInsumo } },
+      ]
+    };
+  }
+
+  private buildCategoriaCondition(categoria: string): Prisma.InsumoWhereInput {
+    return {
+      OR: [
+        {
+          categoria: {
+            name: {
+              contains: categoria,
+            }
+          }
+        },
+        { name: { contains: categoria } },
+      ]
+    };
+  }
+
+  private buildTerminoCondition(termino: string): Prisma.InsumoWhereInput {
+    return {
+      OR: [
+        { name: { contains: termino} },
+        {
+          categoria: {
+            name: {
+              contains: termino,
+            }
+          }
+        },
+        { code: { contains: termino } }
+      ]
+    };
+  }
+
+  private getIncludeRelations(): Prisma.InsumoInclude {
+    return {
+      categoria: true,
+      insumoProveedor: {
+        include: {
+          proveedor: true
+        }
+      }
+    };
   }
 }

@@ -54,4 +54,9 @@ export class InsumosController {
   validateProduct(@Payload() ids: number[]) {
     return this.insumosService.validateProducts(ids);
   }
+
+  @MessagePattern({cmd:'find_insumos'})
+  findInsumos(@Payload() params: any ){
+    return this.insumosService.findInsumos(params);
+  }
 }
