@@ -22,7 +22,7 @@ export class CreateInsumoDto {
 
     @IsBoolean()
     @IsOptional()
-    public available: boolean 
+    public available: boolean
 
     @IsBoolean()
     @IsOptional()
@@ -35,7 +35,15 @@ export class CreateInsumoDto {
     public imagenUrl: string
 
     @IsString()
-    public unidad:string
+    public unidad: string
+
+    // Categoría por ID existente
+    @IsNumber() @Type(() => Number) @IsOptional()
+    categoriaId?: number;
+
+    // O bien por nombre para connectOrCreate
+    @IsString() @IsOptional()
+    categoriaNombre?: string;
 
     // Propiedad que relaciona proveedor y su código
 

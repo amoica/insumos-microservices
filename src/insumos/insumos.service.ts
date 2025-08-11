@@ -17,30 +17,40 @@ export class InsumosService extends PrismaClient implements OnModuleInit {
 
 
   }
-  create(createInsumoDto: CreateInsumoDto) {
-
-    // Separamos los datos del insumo y, si existen, la relación con proveedores
-
-    const { proveedores, ...inusumoData } = createInsumoDto;
-
+  create(dto: CreateInsumoDto) {
+    const { proveedores, categoriaId, categoriaNombre, ...insumoData } = dto;
 
     return this.insumo.create({
       data: {
-        ...inusumoData,
-        ...(proveedores && {
-          insumoProveedor: {
-            create: proveedores.map((prov) => ({
-              proveedor: { connect: { id: prov.proveedorId } },
-              codigoProveedor: prov.codigoProveedor,
-
-              //El precio puede quedar nulo
-              precioUnitario: prov.precioUnitario
-            }))
+        ...insumoData,
+        ...(categoriaId ? { categoria: { connect: { id: categoriaId } } } : {}),
+        ...(!categoriaId && categoriaNombre
+          ? {
+            categoria: {
+              connectOrCreate: {
+                where: { name: categoriaNombre },
+                create: { name: categoriaNombre },
+              },
+            },
           }
-        }
-        )
-      }
-    })
+          : {}),
+        ...(proveedores && proveedores.length
+          ? {
+            insumoProveedor: {
+              create: proveedores.map((p) => ({
+                proveedor: { connect: { id: p.proveedorId } },
+                codigoProveedor: p.codigoProveedor,
+                precioUnitario: p.precioUnitario ?? null,
+              })),
+            },
+          }
+          : {}),
+      },
+      include: {
+        categoria: true,
+        insumoProveedor: { include: { proveedor: true } },
+      },
+    });
   }
 
   async findAll(paginationDto: PaginationDto) {
@@ -128,44 +138,72 @@ export class InsumosService extends PrismaClient implements OnModuleInit {
 
   }
 
-  async update(id: number, updateInsumoDto: UpdateInsumoDto) {
-    // Separamos la lista de proveedores de los demás datos
-    const { proveedores, id: __, ...data } = updateInsumoDto;
-
-    // Nos aseguramos de que el insumo existe
+  async update(id: number, dto: UpdateInsumoDto) {
     await this.findOne(id);
 
-    // Actualizamos el insumo y reemplazamos la relación de proveedores
-    const updateInsumo = await this.insumo.update({
-      where: { id },
-      data: {
-        ...data,
+    const {
+      proveedores,
+      categoriaId,
+      categoriaNombre,
+      id: _omit,            // <- fuera
+      ...scalars
+    } = dto;
+
+    // Armá el bloque de categoría
+    const categoriaBlock =
+      categoriaId
+        ? { categoria: { connect: { id: categoriaId } } }
+        : (categoriaNombre
+          ? {
+            categoria: {
+              connectOrCreate: {
+                where: { name: categoriaNombre },
+                create: { name: categoriaNombre },
+              },
+            },
+          }
+          : {});
+
+    // Armá el bloque de proveedores (relación)
+    const proveedoresBlock = proveedores
+      ? {
         insumoProveedor: {
-          // Eliminamos las relaciones actuales
-          deleteMany: {},
-          // Creamos las nuevas relaciones
-          create: proveedores ? proveedores.map((prov) => ({
-            proveedor: { connect: { id: prov.proveedorId } },
-            codigoProveedor: prov.codigoProveedor,
-            precioUnitario: prov.precioUnitario,
-          })) : [],
+          deleteMany: {}, // limpia relaciones actuales
+          create: proveedores.map((p) => ({
+            proveedor: { connect: { id: p.proveedorId } },
+            codigoProveedor: p.codigoProveedor,
+            // si la columna es opcional, mejor omitir cuando no venga
+            ...(p.precioUnitario !== undefined
+              ? { precioUnitario: p.precioUnitario }
+              : {}),
+          })),
         },
-      },
-    });
-
-    return updateInsumo;
-  }
-
-  async remove(id: number) {
-
-    await this.findOne(id);
-    const insumo = await this.insumo.update({
-      where: { id },
-      data: {
-        available: false
       }
-    })
-    return insumo;
+      : {};
+
+    // Armá data sólo con campos válidos:
+    const data: Prisma.InsumoUpdateInput = {
+      // scalars del insumo (name, code, description, minimunStock, available, etc.)
+      ...(scalars.name !== undefined ? { name: scalars.name } : {}),
+      ...(scalars.code !== undefined ? { code: scalars.code } : {}),
+      ...(scalars.description !== undefined ? { description: scalars.description } : {}),
+      ...(scalars.minimunStock !== undefined ? { minimunStock: scalars.minimunStock } : {}),
+      ...(scalars.available !== undefined ? { available: scalars.available } : {}),
+      ...(scalars.isInventoriable !== undefined ? { isInventoriable: scalars.isInventoriable } : {}),
+      ...(scalars.sinonimo !== undefined ? { sinonimo: scalars.sinonimo } : {}),
+      ...(scalars.imagenUrl !== undefined ? { imagenUrl: scalars.imagenUrl } : {}),
+      ...(scalars.unidad !== undefined ? { unidad: scalars.unidad } : {}),
+
+      // relaciones
+      ...categoriaBlock,
+      ...proveedoresBlock,
+    };
+
+    return this.insumo.update({
+      where: { id },
+      data,
+      include: this.getIncludeRelations(),
+    });
   }
 
   async validateProducts(ids: number[]) {
@@ -211,9 +249,9 @@ export class InsumosService extends PrismaClient implements OnModuleInit {
 
     return this.insumo.findMany({
       where: condiciones.length > 0 ? { AND: condiciones } : undefined,
-      select:{
-        name:true,
-        id:true
+      select: {
+        name: true,
+        id: true
       },
       orderBy: { name: 'asc' },
     });
@@ -245,7 +283,7 @@ export class InsumosService extends PrismaClient implements OnModuleInit {
   private buildTerminoCondition(termino: string): Prisma.InsumoWhereInput {
     return {
       OR: [
-        { name: { contains: termino} },
+        { name: { contains: termino } },
         {
           categoria: {
             name: {
@@ -267,5 +305,9 @@ export class InsumosService extends PrismaClient implements OnModuleInit {
         }
       }
     };
+  }
+
+  getCategoriasInsumo(){
+    return this.insumoCategoria.findMany();
   }
 }

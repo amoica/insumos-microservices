@@ -1,72 +1,32 @@
-import { EstadoOrdenFabricacion, Prioridad } from "@prisma/client";
-import { Type } from "class-transformer";
-import { IsDate, IsInt, IsOptional, IsString, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsInt, IsOptional, IsString, IsEnum, IsDateString, ValidateNested, IsObject } from 'class-validator';
+import { Type } from 'class-transformer';
+import { Prioridad } from '@prisma/client';
+import { SnapshotSkid } from '../types/snapshot-skid.type';
 
-export class PedidoClienteDto {
-  @IsString()
-  @IsNotEmpty()
-  numero: string;
-
-  @IsInt()
-  clienteId: number;
-
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  fecha?: Date;
-
-  @IsOptional()
-  @IsInt()
-  contactoId?: number;
-
-  @IsOptional()
-  @IsString()
-  adjunto?: string;
+class PedidoClienteDto {
+  @IsString() numero!: string;
+  @IsInt() clienteId!: number;
+  @IsInt() contactoId!: number;
+  @IsOptional() @IsString() adjunto?: string;
+  @IsOptional() @IsDateString() fecha?: string;
 }
 
 export class CreateOrdenFabricacionDto {
-  @IsString()
-  @IsNotEmpty()
-  codigo: string;
+  @IsString() codigo!: string;
+  @IsInt() productoFabricadoId!: number;
+  @IsInt() cantidad!: number;
 
-  @IsInt()
-  productoFabricadoId: number;
+  @IsOptional() @IsDateString() fechaEntrega?: string;
+  @IsOptional() @IsString() observaciones?: string;
+  @IsOptional() @IsInt() nroPresupuesto?: number;
+  @IsOptional() @IsEnum(Prioridad) prioridad?: Prioridad;
 
-  @IsInt()
-  cantidad: number;
+  // yacimientoId en schema, pero en tu create usás yacimiento: { connect: { id: ... } }
+  @IsInt() yacimiento!: number;
 
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  fechaEntrega?: Date;
+  @ValidateNested() @Type(() => PedidoClienteDto)
+  pedidoCliente!: PedidoClienteDto;
 
-  @IsOptional()
-  @IsString()
-  observaciones?: string;
-
-  @IsOptional()
-  @IsInt()
-  nroPresupuesto?: number;
-
-  @IsNotEmpty()
-  prioridad?: Prioridad;
-
-  
-  @IsInt()
-  @IsNotEmpty()
-  yacimiento: number;
-
-
-
-  @IsOptional()
-  snapshotSkid?: any; // Si deseas validar el JSON, puedes crear un DTO anidado, pero por ahora lo dejamos como any
-
-  // Datos del Pedido del Cliente (opcional)
-  @IsOptional()
-  pedidoCliente?: PedidoClienteDto;
-
-  @IsOptional()
-  estado: EstadoOrdenFabricacion;
-
-
+  // puede venir como objeto (mejor) o string JSON (lo parseamos en service)
+  @IsOptional() @IsObject() snapshotSkid?: SnapshotSkid | any;
 }

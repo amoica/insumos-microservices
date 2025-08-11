@@ -44,10 +44,10 @@ export class InsumosController {
   }
 
   //@Delete(':id')
-  @MessagePattern({ cmd: 'delete_insumo' })
+  /*@MessagePattern({ cmd: 'delete_insumo' })
   remove(@Payload('id', ParseIntPipe) id: number) {
     return this.insumosService.remove(+id);
-  }
+  }*/
 
 
   @MessagePattern({ cmd: 'validate_products' })
@@ -55,8 +55,13 @@ export class InsumosController {
     return this.insumosService.validateProducts(ids);
   }
 
-  @MessagePattern({cmd:'find_insumos'})
-  findInsumos(@Payload() params: any ){
+  @MessagePattern({ cmd: 'find_insumos' })
+  findInsumos(@Payload() params: any) {
     return this.insumosService.findInsumos(params);
+  }
+
+  @MessagePattern({ cmd: 'find_categoria_insumo' })
+  getCategoriasInsumo() {
+    return this.insumosService.getCategoriasInsumo();
   }
 }

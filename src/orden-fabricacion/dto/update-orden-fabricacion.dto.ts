@@ -1,26 +1,25 @@
+import { IsEnum, IsNumber, IsObject, IsOptional } from 'class-validator';
+import { EstadoOrdenFabricacion } from '@prisma/client';
+import { SnapshotSkid } from '../types/snapshot-skid.type';
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateOrdenFabricacionDto } from './create-orden-fabricacion.dto';
-import { IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
-import { EstadoOrdenFabricacion } from '@prisma/client';
 
-export class UpdateOrdenFabricacionDto extends PartialType(CreateOrdenFabricacionDto) {
+export class UpdateOrdenFabricacionDto extends PartialType(CreateOrdenFabricacionDto){
 
-  @IsInt()
-  id: number;
+  @IsNumber()
+  id: number
 
-  @IsOptional()
-  snapshotSkid?: any;
-
-  @IsOptional()
-  @IsString()
-  revisionObservacion?: string;
-
-  @IsOptional()
-  @IsEnum(EstadoOrdenFabricacion)
+  @IsOptional() @IsEnum(EstadoOrdenFabricacion)
   estado?: EstadoOrdenFabricacion;
 
-  // Solo requerido si vas a aprobar
+  @IsOptional() @IsObject()
+  snapshotSkid?: SnapshotSkid | any;
+
+  // opcional: observación de revisión
   @IsOptional()
-  @IsInt()
+  revisionObservacion?: string;
+
+  // negocio: requerido sólo al aprobar
+  @IsOptional()
   depositoId?: number;
 }
